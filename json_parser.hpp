@@ -1,3 +1,6 @@
+#ifndef _JSONP_HPP
+#define _JSONP_HPP
+
 #include <fstream>
 #include <iostream>
 #include <string>
@@ -12,3 +15,5 @@ typedef struct Users{
 } User;
 
 int parse(std::string path, int &commandChannelPort, int &dataChannelPort, std::vector<User> &users, std::vector<std::string> &files);
+
+#endif
