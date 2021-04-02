@@ -64,8 +64,16 @@ void comiunicateWithServer() {
 				ExitWithError("send() sent a different number of bytes than expected.\n");
 			}
 
-			if (strncmp("quit", message_buffer, 4) == 0) {
+			if (strcmp("quit\n", message_buffer) == 0) {
 				is_user_logged_in = 0;
+				// Check if successful log out
+				
+				// recv()
+				bzero(message_buffer, MESSAGE_BUFFER_SIZE);
+				if ((recv_message_size = recv(client_socket_fd, message_buffer, MESSAGE_BUFFER_SIZE, 0)) < 0) {
+					ExitWithError("recv() failed");
+				}
+				printf("%s", message_buffer);
 			}
 		}
 	}

@@ -55,6 +55,14 @@ void openCommandChannel() {
 	}
 }
 
+std::string handleCommand(char *command) {
+	if (strcmp("quit\n", command) == 0) {
+		// Log Off user
+		return "221: Successful Quit.\n";
+	}
+	return "Command not found\n";
+}
+
 void handleConnections() {
   // Log
   printf("Waiting for connections ...\n");
@@ -109,7 +117,7 @@ void handleConnections() {
 				bzero(message_buffer, MESSAGE_BUFFER_SIZE);
 				recv_message_size = recv(socket_fd, message_buffer, MESSAGE_BUFFER_SIZE, 0);
 				if (recv_message_size < 0) {
-				ExitWithError("recv() failed");
+					ExitWithError("recv() failed");
 				} else if (recv_message_size == 0) {
 					// Log
 					printf("Client disconnected from the server.\t");
@@ -117,15 +125,17 @@ void handleConnections() {
 					close(socket_fd);
 					client_socket[client_index] = 0;
 				} else {
-				message_buffer[MESSAGE_BUFFER_SIZE - 1] = '\0';
-				int send_meesage_len = strlen(message_buffer) + 1;
+					printf("The client's message is %s", message_buffer);
 
-				if(send(socket_fd, message_buffer, send_meesage_len, 0) != send_meesage_len) {
-					ExitWithError("send() sent a different number of bytes than expected.\n");
-				}
-				printf("The client's message is %s", message_buffer);
+					sprintf(message_buffer, "%s", handleCommand(message_buffer).c_str());
+					message_buffer[MESSAGE_BUFFER_SIZE - 1] = '\0';
+					int send_meesage_len = strlen(message_buffer) + 1;
 
-				break;
+					if(send(socket_fd, message_buffer, send_meesage_len, 0) != send_meesage_len) {
+						ExitWithError("send() sent a different number of bytes than expected.\n");
+					}
+
+					break;
 				}
 
 			}

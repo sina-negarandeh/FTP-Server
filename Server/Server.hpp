@@ -19,6 +19,8 @@ void ExitWithError(std::string error);
 
 void openCommandChannel();
 
+std::string handleCommand(char *command);
+
 void handleConnections();
 
 void closeCommandChannel();
