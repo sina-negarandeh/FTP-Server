@@ -16,9 +16,15 @@ int recv_message_size;
 
 char message_buffer[MESSAGE_BUFFER_SIZE] = {0};
 
-void ExitWithError(string error) {
-	perror(error.c_str());
-	exit(EXIT_FAILURE);
+vector<string> split_command(string _command, char delim=' '){
+    vector<string> output;
+    string part;
+    stringstream s(_command);
+    while (getline(s, part, delim)) {
+		part = trim(part);
+        output.push_back(part); 
+    } 
+    return output;
 }
 
 void openCommandChannel() {
@@ -81,36 +87,41 @@ std::string runCommand(std::string command) {
 		wait(NULL);
 		return string(result_buffer);
 	}
+	return "error";
 }
 
 std::string handleCommand(char *command) {
-	if (strcmp("quit\n", command) == 0) {
+	string _command(command);
+	vector<string> splitted_command = split_command(_command);
+	cout<<splitted_command[0].c_str()<<endl;
+	// if (splitted_command.size() == 0) return "Command not found\n";
+	if (strcmp(splitted_command[0].c_str(), "quit") == 0) {
 		// Log Off user
 		return "221: Successful Quit.\n";
-	} else if (strcmp("help\n", command) == 0) {
+	} else if (strcmp(splitted_command[0].c_str(), "help") == 0) {
 		// TODO: Fix message
 		return "214\n USER [name], Its argument is used to specify the user’s string. It is used for user authentication.\n";
-	} else if (strcmp("pwd\n", command) == 0) {
+	} else if (strcmp(splitted_command[0].c_str(), "pwd") == 0) {
 		return "257: " + runCommand("pwd") + "\n";	//257: <working directory path>\n
-	} else if (strncmp("mkd", command, 3) == 0) { // mkd <directory path >
+	} else if (strcmp(splitted_command[0].c_str(), "mkd") == 0) { // mkd <directory path >
 		// TODO: Add runCommand
 		printf("command: mkd\n");
-	} else if (strncmp("dele", command, 4) == 0) {
+	} else if (strcmp(splitted_command[0].c_str(), "dele") == 0) {
 		// TODO: Add runCommand
 		printf("command: dele\n");
-	} else if (strcmp("ls\n", command) == 5) {
+	} else if (strcmp(splitted_command[0].c_str(), "ls") == 0) {
 		// TODO: Add runCommand
 		printf("command: ls\n");
 		// Send unCommand("ls") with data channel
 		return "226: List transfer done.\n";
-	} else if (strncmp("cwd", command, 3) == 0) {
+	} else if (strcmp(splitted_command[0].c_str(), "cwd") == 0) {
 		// TODO: Add runCommand
 		printf("command: cwd\n");
-	} else if (strncmp("rename", command, 6) == 0) {
+	} else if (strcmp(splitted_command[0].c_str(), "rename") == 0) {
 		// TODO: Add runCommand
 		printf("command: rename\n");
 		return "250: Successful change.\n";
-	} else if (strncmp("retr", command, 4) == 0) {
+	} else if (strcmp(splitted_command[0].c_str(), "retr") == 0) {
 		// TODO: Add runCommand
 		printf("command: retr\n");
 	}

@@ -12,5 +12,6 @@
 
 std::string trim(std::string s);
 int log(std::string message, std::string type);
+void ExitWithError(std::string error);
 
 #endif

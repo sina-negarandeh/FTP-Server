@@ -22,6 +22,12 @@ int log(string message, string type="NOTIFICATION"){
     return 1;
 }
 
+void ExitWithError(string error) {
+	perror(error.c_str());
+    log(error, "ERROR");
+	exit(EXIT_FAILURE);
+}
+
 
 //How to use the logger:
 // int main(){

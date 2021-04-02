@@ -8,6 +8,7 @@
 #include <unistd.h>
 #include <arpa/inet.h>
 #include <sys/socket.h>
+#include "logger.hpp"
 
 #define SERVER_PORT 8080
 #define MESSAGE_BUFFER_SIZE 1024

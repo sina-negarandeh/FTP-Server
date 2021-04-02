@@ -30,3 +30,6 @@
 *.exe
 *.out
 *.app
+Client/Client
+Server/Server
+.vscode

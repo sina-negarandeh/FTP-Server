@@ -9,12 +9,6 @@ struct sockaddr_in server_address;
 int recv_message_size;
 char message_buffer[MESSAGE_BUFFER_SIZE] = {0};
 
-
-void ExitWithError(string error) {
-	perror(error.c_str());
-	exit(EXIT_FAILURE);
-}
-
 void openCommandChannel() {
 
 	// Build address data structure

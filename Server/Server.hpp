@@ -4,7 +4,9 @@
 #include <string>
 #include <stdio.h>
 #include <errno.h>
-#include <string>
+#include <vector>
+#include <iostream>
+#include <sstream>
 #include <string.h>
 #include <unistd.h>
 #include <stdlib.h>
@@ -12,6 +14,7 @@
 #include <arpa/inet.h>
 #include <sys/socket.h>
 #include <netinet/in.h>
+#include "logger.hpp"
 
 #define PORT 8080
 #define CLIENTS_NUMBER 30
