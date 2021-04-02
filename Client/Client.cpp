@@ -12,7 +12,7 @@ char message_buffer[MESSAGE_BUFFER_SIZE] = {0};
 
 void ExitWithError(string error) {
 	perror(error.c_str());
-	exit(0);
+	exit(EXIT_FAILURE);
 }
 
 void openCommandChannel() {
@@ -67,7 +67,7 @@ void comiunicateWithServer() {
 			if (strcmp("quit\n", message_buffer) == 0) {
 				is_user_logged_in = 0;
 				// Check if successful log out
-				
+
 				// recv()
 				bzero(message_buffer, MESSAGE_BUFFER_SIZE);
 				if ((recv_message_size = recv(client_socket_fd, message_buffer, MESSAGE_BUFFER_SIZE, 0)) < 0) {

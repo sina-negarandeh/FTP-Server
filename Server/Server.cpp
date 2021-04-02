@@ -18,7 +18,7 @@ char message_buffer[MESSAGE_BUFFER_SIZE] = {0};
 
 void ExitWithError(string error) {
 	perror(error.c_str());
-	exit(0);
+	exit(EXIT_FAILURE);
 }
 
 void openCommandChannel() {
@@ -55,10 +55,64 @@ void openCommandChannel() {
 	}
 }
 
+std::string runCommand(std::string command) {
+	int unnamed_pipe[2];
+	pid_t pid;
+	char result_buffer[MESSAGE_BUFFER_SIZE];
+
+	if (pipe(unnamed_pipe) < 0) {
+		ExitWithError("pipe() failed");
+	}
+
+	if ((pid = fork()) < 0) {
+		ExitWithError("fork() failed");
+	}
+
+	if(pid == 0) {
+		dup2 (unnamed_pipe[WRITE], STDOUT_FILENO);
+		close(unnamed_pipe[READ]);
+		close(unnamed_pipe[WRITE]);
+		execl(("/bin/" + command).c_str(), command.c_str(), NULL);
+		ExitWithError("execl() failed");
+	} else {
+		close(unnamed_pipe[WRITE]);
+		int recv_message_size = read(unnamed_pipe[READ], result_buffer, sizeof(result_buffer));
+		printf("Output: (%.*s)\n", recv_message_size, result_buffer);
+		wait(NULL);
+		return string(result_buffer);
+	}
+}
+
 std::string handleCommand(char *command) {
 	if (strcmp("quit\n", command) == 0) {
 		// Log Off user
 		return "221: Successful Quit.\n";
+	} else if (strcmp("help\n", command) == 0) {
+		// TODO: Fix message
+		return "214\n USER [name], Its argument is used to specify the user’s string. It is used for user authentication.\n";
+	} else if (strcmp("pwd\n", command) == 0) {
+		return "257: " + runCommand("pwd") + "\n";	//257: <working directory path>\n
+	} else if (strncmp("mkd", command, 3) == 0) { // mkd <directory path >
+		// TODO: Add runCommand
+		printf("command: mkd\n");
+	} else if (strncmp("dele", command, 4) == 0) {
+		// TODO: Add runCommand
+		printf("command: dele\n");
+	} else if (strcmp("ls\n", command) == 5) {
+		// TODO: Add runCommand
+		printf("command: ls\n");
+		// Send unCommand("ls") with data channel
+		return "226: List transfer done.\n";
+	} else if (strncmp("cwd", command, 3) == 0) {
+		// TODO: Add runCommand
+		printf("command: cwd\n");
+	} else if (strncmp("rename", command, 6) == 0) {
+		// TODO: Add runCommand
+		printf("command: rename\n");
+		return "250: Successful change.\n";
+	} else if (strncmp("retr", command, 4) == 0) {
+		// TODO: Add runCommand
+		printf("command: retr\n");
 	}
 	return "Command not found\n";
 }
