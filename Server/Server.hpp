@@ -27,8 +27,6 @@ void ExitWithError(std::string error);
 
 void openCommandChannel();
 
-std::string runCommand(std::string command);
-
 std::string handleCommand(char *command);
 
 void handleConnections();

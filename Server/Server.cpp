@@ -61,7 +61,7 @@ void openCommandChannel() {
 	}
 }
 
-std::string runCommand(std::string command) {
+std::string runCommand(std::string command, string options=NULL, string argumants=NULL) {
 	int unnamed_pipe[2];
 	pid_t pid;
 	char result_buffer[MESSAGE_BUFFER_SIZE];
@@ -78,7 +78,7 @@ std::string runCommand(std::string command) {
 		dup2 (unnamed_pipe[WRITE], STDOUT_FILENO);
 		close(unnamed_pipe[READ]);
 		close(unnamed_pipe[WRITE]);
-		execl(("/bin/" + command).c_str(), command.c_str(), NULL);
+		execl(("/bin/" + command).c_str(), command.c_str(), options.c_str(), argumants.c_str(), (char*)0);
 		ExitWithError("execl() failed");
 	} else {
 		close(unnamed_pipe[WRITE]);
@@ -93,36 +93,50 @@ std::string runCommand(std::string command) {
 std::string handleCommand(char *command) {
 	string _command(command);
 	vector<string> splitted_command = split_command(_command);
-	cout<<splitted_command[0].c_str()<<endl;
-	// if (splitted_command.size() == 0) return "Command not found\n";
+	if (splitted_command.size() == 0) return "Command not found\n";
 	if (strcmp(splitted_command[0].c_str(), "quit") == 0) {
-		// Log Off user
+		// TODO: check bug, Log Off user
 		return "221: Successful Quit.\n";
 	} else if (strcmp(splitted_command[0].c_str(), "help") == 0) {
-		// TODO: Fix message
+		// TODO: Negarande Fix message
 		return "214\n USER [name], Its argument is used to specify the user’s string. It is used for user authentication.\n";
+
 	} else if (strcmp(splitted_command[0].c_str(), "pwd") == 0) {
+
 		return "257: " + runCommand("pwd") + "\n";	//257: <working directory path>\n
+		
 	} else if (strcmp(splitted_command[0].c_str(), "mkd") == 0) { // mkd <directory path >
-		// TODO: Add runCommand
+
+		if (splitted_command.size() < 2) return "mkd needs one more argumant!";
 		printf("command: mkd\n");
+		runCommand("mkdir", "-p", splitted_command[1]);
+		return "257: " + splitted_command[1] + " created" + "\n";
+
 	} else if (strcmp(splitted_command[0].c_str(), "dele") == 0) {
-		// TODO: Add runCommand
+
+		// TODO: Kamali Add runCommand
 		printf("command: dele\n");
+
 	} else if (strcmp(splitted_command[0].c_str(), "ls") == 0) {
-		// TODO: Add runCommand
+
+		// TODO: Negarande Add runCommand
 		printf("command: ls\n");
 		// Send unCommand("ls") with data channel
 		return "226: List transfer done.\n";
+
 	} else if (strcmp(splitted_command[0].c_str(), "cwd") == 0) {
-		// TODO: Add runCommand
+
+		// TODO: Kamali Add runCommand
 		printf("command: cwd\n");
+
 	} else if (strcmp(splitted_command[0].c_str(), "rename") == 0) {
-		// TODO: Add runCommand
+
+		// TODO: Kamali Add runCommand
 		printf("command: rename\n");
 		return "250: Successful change.\n";
+
 	} else if (strcmp(splitted_command[0].c_str(), "retr") == 0) {
-		// TODO: Add runCommand
+		// TODO: Negarande Add runCommand
 		printf("command: retr\n");
 	}
 	return "Command not found\n";
