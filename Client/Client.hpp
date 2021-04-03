@@ -8,9 +8,8 @@
 #include <unistd.h>
 #include <arpa/inet.h>
 #include <sys/socket.h>
-#include "logger.hpp"
 
-#define SERVER_PORT 8080
+#define SERVER_PORT 8000
 #define MESSAGE_BUFFER_SIZE 1024
 
 void ExitWithError(std::string error);
