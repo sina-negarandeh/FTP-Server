@@ -5,6 +5,10 @@ using namespace std;
 int server_socket_fd, client_socket_fd;
 struct sockaddr_in server_address;
 int opt = 1;
+int command_channel_port, data_channel_port;
+std::vector<User_s> config_users;
+std::vector<std::string> files;
+std::vector<User> connected_users;
 
 uint addrlen = sizeof(server_address);
 int socket_fd;
@@ -35,7 +39,7 @@ void openCommandChannel() {
 	// Build address data structure
 	server_address.sin_family = AF_INET;
 	server_address.sin_addr.s_addr = INADDR_ANY;
-	server_address.sin_port = htons(PORT);
+	server_address.sin_port = htons(command_channel_port);
 
 	// socket()
 	if ((server_socket_fd = socket(AF_INET, SOCK_STREAM, 0)) < 0) {
@@ -106,7 +110,7 @@ std::string handleCommand(char *command) {
 		return "257: " + runCommand("pwd") + "\n";	//257: <working directory path>\n
 		
 	} else if (strcmp(splitted_command[0].c_str(), "mkd") == 0) { // mkd <directory path >
-
+		//TODO: based on the user path!
 		if (splitted_command.size() < 2) return "mkd needs one more argumant!";
 		printf("command: mkd\n");
 		runCommand("mkdir", "-p", splitted_command[1]);
@@ -144,7 +148,7 @@ std::string handleCommand(char *command) {
 
 void handleConnections() {
   // Log
-  printf("Waiting for connections ...\n");
+	printf("Waiting for connections ...\n");
 
 	while (1) {
 		FD_ZERO(&read_fds);

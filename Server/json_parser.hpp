@@ -12,8 +12,8 @@ typedef struct Users{
     std::string password;
     bool admin;
     int size;
-} User;
+} User_s;
 
-int parse(std::string path, int &commandChannelPort, int &dataChannelPort, std::vector<User> &users, std::vector<std::string> &files);
+int parse(std::string path, int &commandChannelPort, int &dataChannelPort, std::vector<User_s> &users, std::vector<std::string> &files);
 
 #endif

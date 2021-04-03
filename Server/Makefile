@@ -1,7 +1,7 @@
 all : Server
 
 Server : Main.o Server.o logger.o json_parser.o
-		g++ Main.o Server.o logger.o -o Server
+		g++ Main.o Server.o logger.o json_parser.o -o Server
 
 Main.o : Main.cpp Server.hpp
 	g++ -c Main.cpp

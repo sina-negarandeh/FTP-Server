@@ -25,8 +25,8 @@ int read_intValue(string full_file, int &pos, int& pos2){
     return stoi(value);
 }
 
-User read_user_data(string user_data){
-    User s;
+User_s read_user_data(string user_data){
+    User_s s;
     int pos = 0;
     int pos2 = -1;
     while(pos != -1 || pos != user_data.length()){
@@ -51,13 +51,13 @@ User read_user_data(string user_data){
     return s;
 }
 
-vector<User> read_users (string full_file, int &pos, int& pos2){
+vector<User_s> read_users (string full_file, int &pos, int& pos2){
     pos = full_file.find('[', pos2 + 1);
     pos2 = full_file.find("]", pos + 1);
     string value = full_file.substr(pos+1, pos2 - pos - 1);
     int npos = 0;
     int npos2 = -1;
-    vector<User> users;
+    vector<User_s> users;
     while (npos != -1 || npos != value.length()){
         npos = value.find('{', npos2 + 1);
         npos2 = value.find("}", npos + 1);
@@ -85,7 +85,7 @@ vector<string> read_files (string full_file, int &pos, int& pos2){
     return files;
 }
 
-int parse(string path, int &commandChannelPort, int &dataChannelPort, vector<User> &users, vector<string> &files){
+int parse(string path, int &commandChannelPort, int &dataChannelPort, vector<User_s> &users, vector<string> &files){
     string full_file = read_file_single_str(path);
     int pos = 0;
     int pos2 = -1;
