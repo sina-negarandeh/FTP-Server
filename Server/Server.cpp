@@ -179,6 +179,12 @@ std::string handleCommand(char *command, User &user) {
 		if (user.state != LOGGED_IN_STATE) return "332 Need account for login!\n";
 		printf("command: cwd\n");
 
+		if (chdir(splitted_command[1].c_str()) == 0) {
+			return "250: Successful change.\n";
+		} else {
+			return "500: Error.\n";
+		}
+
 	} else if (strcmp(splitted_command[0].c_str(), "rename") == 0) {
 
 		if (user.state != LOGGED_IN_STATE) return "332 Need account for login!\n";
