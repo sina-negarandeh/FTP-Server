@@ -155,9 +155,15 @@ std::string handleCommand(char *command, User &user) {
 
 	} else if (strcmp(splitted_command[0].c_str(), "dele") == 0) {
 
-		// TODO: Kamali Add runCommand
 		if (user.state != LOGGED_IN_STATE) return "332 Need account for login!\n";
 		printf("command: dele\n");
+
+		if (strcmp(splitted_command[1].c_str(), "-f") == 0) {
+			runCommand("rm", NULL, splitted_command[2]);
+		} else if (strcmp(splitted_command[1].c_str(), "-d") == 0) {
+			runCommand("rm", "-r", splitted_command[2]);
+		}
+		return "250: " + splitted_command[2] + "deleted.\n";
 
 	} else if (strcmp(splitted_command[0].c_str(), "ls") == 0) {
 
@@ -175,7 +181,6 @@ std::string handleCommand(char *command, User &user) {
 
 	} else if (strcmp(splitted_command[0].c_str(), "rename") == 0) {
 
-		// TODO: Kamali Add runCommand
 		if (user.state != LOGGED_IN_STATE) return "332 Need account for login!\n";
 		printf("command: rename\n");
 		
