@@ -178,7 +178,12 @@ std::string handleCommand(char *command, User &user) {
 		// TODO: Kamali Add runCommand
 		if (user.state != LOGGED_IN_STATE) return "332 Need account for login!\n";
 		printf("command: rename\n");
-		return "250: Successful change.\n";
+		
+		if (rename(splitted_command[1].c_str(), splitted_command[2].c_str()) == 0) {
+			return "250: Successful change.\n";
+		} else {
+			return "500: Error.\n";
+		}
 
 	} else if (strcmp(splitted_command[0].c_str(), "retr") == 0) {
 		// TODO: Negarande Add runCommand
