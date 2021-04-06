@@ -9,12 +9,13 @@
 
 class User{
     public:
-    User(std::string _ip_address, int _socket_addr);
+    User(std::string _ip_address, int _socket_addr, int _socket_fd);
     void set_username(std::string _username){username = _username;}
     void set_password(std::string _password){password = _password;}
     void complete_user(User_s u);
     std::string ip_address;
     int port;
+    int socket_fd;
     std::string path;
     int data_remaining;
     int state;

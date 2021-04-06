@@ -6,6 +6,7 @@
 #include <errno.h>
 #include <vector>
 #include <iostream>
+#include <filesystem>
 #include <sstream>
 #include <string.h>
 #include <unistd.h>
@@ -29,10 +30,13 @@
 extern int command_channel_port, data_channel_port;
 extern std::vector<User_s> config_users;
 extern std::vector<std::string> files;
+extern char default_path[1024];
 
 void ExitWithError(std::string error);
 
 void openCommandChannel();
+
+char * getDirectory( char * buf, int count);
 
 std::string handleCommand(char *command);
 
