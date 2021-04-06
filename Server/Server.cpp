@@ -16,6 +16,13 @@ int socket_fd;
 int max_socket_fd;
 int client_socket[CLIENTS_NUMBER];
 fd_set read_fds;
+int server_data_socket_fd, client_data_socket_fd;
+struct sockaddr_in server_data_address;
+int data_addrlen = sizeof(server_data_address);
+int opt1;
+char log_txt[MESSAGE_BUFFER_SIZE];
+
+char data_buffer[MESSAGE_BUFFER_SIZE] = {0};
 
 int recv_message_size;
 
@@ -32,8 +39,7 @@ vector<string> split_command(string _command, char delim=' '){
     return output;
 }
 
-char * getDirectory( char * buf, int count)
-{
+char * getDirectory( char * buf, int count){
     int i;
     int rslt = readlink("/proc/self/exe", buf, count - 1);
     if (rslt < 0 || (rslt >= count - 1))
@@ -52,9 +58,90 @@ char * getDirectory( char * buf, int count)
     return buf;
 }
 
+void openDataChannel() {
+
+    // Build address data structure
+    server_data_address.sin_family = AF_INET;
+    server_data_address.sin_addr.s_addr = INADDR_ANY;
+    server_data_address.sin_port = htons(data_channel_port);
+
+    // socket()
+    if ((server_data_socket_fd = socket(AF_INET, SOCK_STREAM, 0)) < 0) {
+        ExitWithError("Failed to create a socket\n");
+    }
+
+    // Set socket options
+    if (setsockopt(server_data_socket_fd, SOL_SOCKET, SO_REUSEADDR | SO_REUSEPORT, &opt1, sizeof(opt1)) < 0) {
+        ExitWithError("Failed to set sock options.\n");
+    }
+
+    // bind()
+    if (bind(server_data_socket_fd, (struct sockaddr *) &server_data_address, sizeof(server_data_address)) < 0) {
+        ExitWithError("Failed to bind a socket\n");
+    }
+
+    // Log
+	log("data channel is listening on port " +  to_string(data_channel_port), "NOTIFICATION");
+    // listen()
+    if (listen(server_data_socket_fd, 3) < 0) {
+        ExitWithError("Failed to listen\n");
+    }
+}
+
+void accept_data_connection(){
+	if ((client_data_socket_fd = accept(server_data_socket_fd, (struct sockaddr *)&server_data_address, (socklen_t *)&data_addrlen)) < 0) {
+        ExitWithError("Failed to accept.\n");
+    }
+	printf("data connected\n");
+}
+
+
+int sendFile(FILE* file_ptr) {
+    for (int i = 0; i < MESSAGE_BUFFER_SIZE; i++) {
+        data_buffer[i] = fgetc(file_ptr);
+        if (data_buffer[i] == EOF) {
+            return 1;
+        }
+    }
+    return 0;
+}
+
+void send_pure_data(string data){
+	sprintf(data_buffer, "%s", data.c_str());
+	send(client_data_socket_fd, data_buffer, strlen(data_buffer), 0);
+}
+
+int sendData(string file_name) {
+    FILE* file_ptr = fopen(file_name.c_str(), "r");
+    if (file_ptr == NULL) {
+        ExitWithError("File open failed!\n");
+    }
+	int size = 0;
+    while (1) {
+        if (sendFile(file_ptr) == 1) {
+            send(client_data_socket_fd, data_buffer, strlen(data_buffer), 0);
+			size += strlen(data_buffer);
+            break;
+        } else {
+            // send
+            send(client_data_socket_fd, data_buffer, strlen(data_buffer), 0);
+			size += strlen(data_buffer);
+            bzero(data_buffer, MESSAGE_BUFFER_SIZE);
+        }
+    }
+
+    fclose(file_ptr);
+	return size;
+}
+
+void closeDataChannel() {
+    // close()
+    close(server_data_socket_fd);
+}
+
 int authenthicate_user(User &user){
 	for (int i = 0 ; i < config_users.size() ; i++){
-		if (config_users[i].user == user.username || config_users[i].password == user.password){
+		if (config_users[i].user == user.username && config_users[i].password == user.password){
 			user.complete_user(config_users[i]);
 			return 0;
 		}
@@ -98,12 +185,14 @@ void openCommandChannel() {
 	}
 
 	// Log
-	printf("Server is listening on port %d\n", command_channel_port);
+	log("Server is listening on port " +  to_string(command_channel_port), "NOTIFICATION");
 
 	// listen()
 	if (listen(server_socket_fd, 3) < 0) {
 		ExitWithError("Failed to listen\n");
 	}
+
+	openDataChannel();
 }
 
 std::string runCommand(std::string command, string options="", string argumants="") {
@@ -164,6 +253,7 @@ std::string handleCommand(char *command, User &user) {
 	}else if (strcmp(splitted_command[0].c_str(), "user") == 0){
 
 		if (user.state != BASE_STATE) return "503: Bad sequence of commands.\n";
+		if (splitted_command.size() < 2) return "501: Syntax error in parameters or argummants\n";
 		user.set_username(splitted_command[1]);
 		user.state = USER_STATE;
 		return "331: User name okay, need password.\n";
@@ -171,24 +261,29 @@ std::string handleCommand(char *command, User &user) {
 	} else if (strcmp(splitted_command[0].c_str(), "pass") == 0){
 
 		if (user.state != USER_STATE) return "503: Bad sequence of commands.\n";
+		if (splitted_command.size() < 2) return "501: Syntax error in parameters or argummants\n";
 		user.set_password(splitted_command[1]);
 		if (authenthicate_user(user) < 0) return "430: Invalid username or password\n";
 		return "230: User logged in, proceed. Logged out if appropriate.\n";
 
 	} else if (strcmp(splitted_command[0].c_str(), "help") == 0) {
 		// TODO: Negarande Fix message
-		return "214\n USER [name], Its argument is used to specify the user’s string. It is used for user authentication.\n";
+		std::ifstream ifs("help.txt");
+		std::string content( (std::istreambuf_iterator<char>(ifs)),
+							(std::istreambuf_iterator<char>()));
+		ifs.close();
+		cout<<content<<endl;
+		return content;
 
 	} else if (strcmp(splitted_command[0].c_str(), "pwd") == 0) {
 
 		if (user.state != LOGGED_IN_STATE) return "332 Need account for login!\n";
-
 		return "257: " + user.path + "\n";  
 		
 	} else if (strcmp(splitted_command[0].c_str(), "mkd") == 0) { // mkd <directory path >
-		//TODO: based on the user path!
+
 		if (user.state != LOGGED_IN_STATE) return "332 Need account for login!\n";
-		if (splitted_command.size() < 2) return "mkd needs one more argumant!\n";
+		if (splitted_command.size() < 2) return "501: Syntax error in parameters or argummants\n";
 		printf("command: mkd\n");
 		runCommand("mkdir", "-p", user.path + splitted_command[1]);
 		return "257: " + splitted_command[1] + " created" + "\n";
@@ -196,6 +291,7 @@ std::string handleCommand(char *command, User &user) {
 	} else if (strcmp(splitted_command[0].c_str(), "dele") == 0) {
 
 		if (user.state != LOGGED_IN_STATE) return "332 Need account for login!\n";
+		if (splitted_command.size() < 3) return "501: Syntax error in parameters or argummants\n";
 		
 		if (strcmp(splitted_command[1].c_str(), "-f") == 0) {
 			runCommand("rm", "-f", user.path + splitted_command[2]);
@@ -206,23 +302,21 @@ std::string handleCommand(char *command, User &user) {
 
 	} else if (strcmp(splitted_command[0].c_str(), "ls") == 0) {
 
-		// TODO: Negarande Add runCommand
 		if (user.state != LOGGED_IN_STATE) return "332 Need account for login!\n";
-		printf("command: ls\n");
-		// Send unCommand("ls") with data channel
+		string response = runCommand("ls", "-a", user.path);
+		send_pure_data(response);
 		return "226: List transfer done.\n";
 
 	} else if (strcmp(splitted_command[0].c_str(), "cwd") == 0) {
 
-		// TODO: Kamali Add runCommand
 		if (user.state != LOGGED_IN_STATE) return "332 Need account for login!\n";
+		if (splitted_command.size() < 2) return "501: Syntax error in parameters or argummants\n";
 		return handle_cwd(splitted_command, user);
 
 	} else if (strcmp(splitted_command[0].c_str(), "rename") == 0) {
 
 		if (user.state != LOGGED_IN_STATE) return "332 Need account for login!\n";
-		printf("command: rename\n");
-		
+		if (splitted_command.size() < 3) return "501: Syntax error in parameters or argummants\n";
 		if (rename((user.path + splitted_command[1]).c_str(), (user.path + splitted_command[2]).c_str()) == 0) {
 			return "250: Successful change.\n";
 		} else {
@@ -230,16 +324,21 @@ std::string handleCommand(char *command, User &user) {
 		}
 
 	} else if (strcmp(splitted_command[0].c_str(), "retr") == 0) {
-		// TODO: Negarande Add runCommand
+
 		if (user.state != LOGGED_IN_STATE) return "332 Need account for login!\n";
-		printf("command: retr\n");
+		if (splitted_command.size() < 2) return "501: Syntax error in parameters or argummants\n";
+		if (user.data_remaining <= 0){
+			return "500: Error.\n";
+		}
+		int size = sendData(user.path + splitted_command[1]);
+		user.data_remaining -= size;
+		return "226: Successful Download\n";
 	}
 	return "Command not found\n";
 }
 
 void handleConnections() {
   // Log
-	printf("Waiting for connections ...\n");
 
 	while (1) {
 		FD_ZERO(&read_fds);
@@ -267,9 +366,12 @@ void handleConnections() {
 				ExitWithError("Failed to accept\n");
 			}
 
+			accept_data_connection();
+
 			// Log
-			printf("Client connected to the server.\t\t");
-			printf("Client IP:\t%s\tClient Port:%d\n", inet_ntoa(server_address.sin_addr), ntohs(server_address.sin_port));
+			bzero(log_txt, MESSAGE_BUFFER_SIZE);
+			sprintf(log_txt, "New Client connected. Client IP: %s  -  Client Port: %d", inet_ntoa(server_address.sin_addr), ntohs(server_address.sin_port));
+			log(log_txt, "NOTIFICATION");
 			connected_users.push_back(User(inet_ntoa(server_address.sin_addr), ntohs(server_address.sin_port), client_socket_fd));
 			const char *send_buffer = "Connected to the server\n";
 			send(client_socket_fd, send_buffer, strlen(send_buffer), 0);
@@ -291,24 +393,28 @@ void handleConnections() {
 				// recv()
 				bzero(message_buffer, MESSAGE_BUFFER_SIZE);
 				recv_message_size = recv(socket_fd, message_buffer, MESSAGE_BUFFER_SIZE, 0);
-				cout<<"sender fd:"<<socket_fd<<endl;
 				if (recv_message_size < 0) {
 					ExitWithError("recv() failed");
 				} else if (recv_message_size == 0) {
 					// Log
-					printf("Client disconnected from the server.\t");
-					printf("Client IP:\t%s\tClient Port:%d\n", inet_ntoa(server_address.sin_addr), ntohs(server_address.sin_port));
+					bzero(log_txt, MESSAGE_BUFFER_SIZE);
+					sprintf(log_txt,"Client disconnected from the server. Client IP: %s  -  Client Port: %d\n", inet_ntoa(server_address.sin_addr), ntohs(server_address.sin_port));
+					log(log_txt, "NOTIFICATION");
 					close(socket_fd);
 					client_socket[client_index] = 0;
 				} else {
 
 					int sender_index = find_user(socket_fd);
-					printf("%s:%d's message is %s", inet_ntoa(server_address.sin_addr), connected_users[sender_index].port, message_buffer);
+					bzero(log_txt, MESSAGE_BUFFER_SIZE);
+					sprintf(log_txt,"%s:%d: %s", inet_ntoa(server_address.sin_addr), connected_users[sender_index].port, message_buffer);
+					log(log_txt, "NOTIFICATION");
 					if (sender_index < 0) ExitWithError("user was not found!"); 
 					sprintf(message_buffer, "%s", handleCommand(message_buffer, connected_users[sender_index]).c_str());
 					message_buffer[MESSAGE_BUFFER_SIZE - 1] = '\0';
 					int send_meesage_len = strlen(message_buffer) + 1;
-
+					bzero(log_txt, MESSAGE_BUFFER_SIZE);
+					sprintf(log_txt,"%s", message_buffer);
+					log(log_txt, "NOTIFICATION");
 					if(send(socket_fd, message_buffer, send_meesage_len, 0) != send_meesage_len) {
 						ExitWithError("send() sent a different number of bytes than expected.\n");
 					}
@@ -319,6 +425,7 @@ void handleConnections() {
 			}
 		}
 	}
+	closeDataChannel();
 }
 
 void closeCommandChannel() {

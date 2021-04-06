@@ -44,4 +44,12 @@ void handleConnections();
 
 void closeCommandChannel();
 
+void openDataChannel();
+
+int sendData(std::string file_name);
+
+void closeDataChannel();
+
+int sendFile(FILE* file_ptr);
+
 #endif

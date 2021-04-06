@@ -3,20 +3,37 @@
 
 #include <stdio.h>
 #include <string>
+#include <vector>
 #include <string.h>
 #include <iostream>
 #include <unistd.h>
 #include <arpa/inet.h>
+#include <fstream>
 #include <sys/socket.h>
+#include "json_parser.hpp"
 
-#define SERVER_PORT 8000
+#define CONFIG_PATH "./config.json"
 #define MESSAGE_BUFFER_SIZE 1024
+
+extern int command_channel_port, data_channel_port;
 
 void ExitWithError(std::string error);
 
 void openCommandChannel();
 
 void connectToServer();
+
+void openDataChannel();
+
+void connectToServer();
+
+void recvData();
+
+int recvFile();
+
+void closeDataChannel();
+
+void connectToDataServer();
 
 void comiunicateWithServer();
 
