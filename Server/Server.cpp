@@ -159,6 +159,15 @@ int find_user(int socket_fd){
 	return -1;
 }
 
+bool find_file(string filename){
+	for (int i = 0 ; i < files.size() ; i++){
+		if (files[i] == filename){
+			return true;
+		}
+	}
+	return false;
+}
+
 void openCommandChannel() {
 	for(int i = 0; i < CLIENTS_NUMBER; i++) {
 		client_socket[i] = 0;
@@ -267,7 +276,7 @@ std::string handleCommand(char *command, User &user) {
 		return "230: User logged in, proceed. Logged out if appropriate.\n";
 
 	} else if (strcmp(splitted_command[0].c_str(), "help") == 0) {
-		// TODO: Negarande Fix message
+
 		std::ifstream ifs("help.txt");
 		std::string content( (std::istreambuf_iterator<char>(ifs)),
 							(std::istreambuf_iterator<char>()));
@@ -327,6 +336,7 @@ std::string handleCommand(char *command, User &user) {
 
 		if (user.state != LOGGED_IN_STATE) return "332 Need account for login!\n";
 		if (splitted_command.size() < 2) return "501: Syntax error in parameters or argummants\n";
+		if (find_file(splitted_command[1]) && (!user.admin)) return "550: File unavailable.\n";
 		if (user.data_remaining <= 0){
 			return "500: Error.\n";
 		}
