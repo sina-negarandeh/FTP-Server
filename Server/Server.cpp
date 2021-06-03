@@ -313,6 +313,7 @@ std::string handleCommand(char *command, User &user) {
 
 		if (user.state != LOGGED_IN_STATE) return "332 Need account for login!\n";
 		string response = runCommand("ls", "-a", user.path);
+		response += '\0';
 		send_pure_data(response);
 		return "226: List transfer done.\n";
 
