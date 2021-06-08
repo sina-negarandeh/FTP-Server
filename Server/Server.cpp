@@ -34,8 +34,8 @@ vector<string> split_command(string _command, char delim=' '){
     stringstream s(_command);
     while (getline(s, part, delim)) {
 		part = trim(part);
-        output.push_back(part); 
-    } 
+        output.push_back(part);
+    }
     return output;
 }
 
@@ -71,7 +71,7 @@ void openDataChannel() {
     }
 
     // Set socket options
-    if (setsockopt(server_data_socket_fd, SOL_SOCKET, SO_REUSEADDR | SO_REUSEPORT, &opt1, sizeof(opt1)) < 0) {
+    if (setsockopt(server_data_socket_fd, SOL_SOCKET, SO_REUSEADDR , &opt1, sizeof(opt1)) < 0) {
         ExitWithError("Failed to set sock options.\n");
     }
 
@@ -184,7 +184,7 @@ void openCommandChannel() {
 	}
 
 	// Set socket options
-	if (setsockopt(server_socket_fd, SOL_SOCKET, SO_REUSEADDR | SO_REUSEPORT, &opt, sizeof(opt)) < 0) {
+	if (setsockopt(server_socket_fd, SOL_SOCKET, SO_REUSEADDR , &opt, sizeof(opt)) < 0) {
 		ExitWithError("Failed to set sock options.\n");
 	}
 
@@ -287,8 +287,8 @@ std::string handleCommand(char *command, User &user) {
 	} else if (strcmp(splitted_command[0].c_str(), "pwd") == 0) {
 
 		if (user.state != LOGGED_IN_STATE) return "332 Need account for login!\n";
-		return "257: " + user.path + "\n";  
-		
+		return "257: " + user.path + "\n";
+
 	} else if (strcmp(splitted_command[0].c_str(), "mkd") == 0) { // mkd <directory path >
 
 		if (user.state != LOGGED_IN_STATE) return "332 Need account for login!\n";
@@ -301,7 +301,7 @@ std::string handleCommand(char *command, User &user) {
 
 		if (user.state != LOGGED_IN_STATE) return "332 Need account for login!\n";
 		if (splitted_command.size() < 3) return "501: Syntax error in parameters or argummants\n";
-		
+
 		if (strcmp(splitted_command[1].c_str(), "-f") == 0) {
 			runCommand("rm", "-f", user.path + splitted_command[2]);
 		} else if (strcmp(splitted_command[1].c_str(), "-d") == 0) {
@@ -320,7 +320,7 @@ std::string handleCommand(char *command, User &user) {
 	} else if (strcmp(splitted_command[0].c_str(), "cwd") == 0) {
 
 		if (user.state != LOGGED_IN_STATE) return "332 Need account for login!\n";
-		if (splitted_command.size() < 1) return "501: Syntax error in parameters or argummants\n";
+		if (splitted_command.size() < 2) return "501: Syntax error in parameters or argummants\n";
 		return handle_cwd(splitted_command, user);
 
 	} else if (strcmp(splitted_command[0].c_str(), "rename") == 0) {
@@ -419,7 +419,7 @@ void handleConnections() {
 					bzero(log_txt, MESSAGE_BUFFER_SIZE);
 					sprintf(log_txt,"%s:%d: %s", inet_ntoa(server_address.sin_addr), connected_users[sender_index].port, message_buffer);
 					log(log_txt, "NOTIFICATION");
-					if (sender_index < 0) ExitWithError("user was not found!"); 
+					if (sender_index < 0) ExitWithError("user was not found!");
 					sprintf(message_buffer, "%s", handleCommand(message_buffer, connected_users[sender_index]).c_str());
 					message_buffer[MESSAGE_BUFFER_SIZE - 1] = '\0';
 					int send_meesage_len = strlen(message_buffer) + 1;
