@@ -320,7 +320,7 @@ std::string handleCommand(char *command, User &user) {
 	} else if (strcmp(splitted_command[0].c_str(), "cwd") == 0) {
 
 		if (user.state != LOGGED_IN_STATE) return "332 Need account for login!\n";
-		if (splitted_command.size() < 2) return "501: Syntax error in parameters or argummants\n";
+		if (splitted_command.size() < 1) return "501: Syntax error in parameters or argummants\n";
 		return handle_cwd(splitted_command, user);
 
 	} else if (strcmp(splitted_command[0].c_str(), "rename") == 0) {
